@@ -1,0 +1,422 @@
+{
+  "schemaVersion": 1,
+  "app": "CaptureText",
+  "sourceProject": "DeskTools",
+  "license": "GPL-3.0-only",
+  "sharedSourceHashes": {
+    "AppLocalizationKit": "0851a965a9dc105658cf8d362b0a14ad13b5ee0b02b6209ce89c7be404bd0174",
+    "LocalWorkflowKit": "de255ec749f18ae4f0850e00a0f176cab040782dde1b8f111f58cad7fbf2898e"
+  },
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 333,
+      "sha256": "da5602dbd93009bbe59dc253fcc836e23994fc598bf297775d8b75db1f594b61"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "bytes": 1753,
+      "sha256": "1807d13bdd8c149eaa6dd4dbfe7916c7094f454da7da2f9a6f767bc4a30b8ce7"
+    },
+    {
+      "path": "DeskTools/.gitignore",
+      "bytes": 55,
+      "sha256": "c915403194b6b63dc2ff283eef02ee37c416eb94610c512b75627c97e947a627"
+    },
+    {
+      "path": "DeskTools/.swift-format",
+      "bytes": 74,
+      "sha256": "bd76f80cb47e96d65b46896d54816d26996fdda48304dffcc53dcb2d3c82671b"
+    },
+    {
+      "path": "DeskTools/LICENSE",
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "path": "DeskTools/Package.swift",
+      "bytes": 1232,
+      "sha256": "2947233125f3afd66ed8854531a8810aa817ab151aad02221b03acd6c91a0f3a"
+    },
+    {
+      "path": "DeskTools/README.md",
+      "bytes": 182,
+      "sha256": "b93ed09955289d0764dce5572cb8e03b55a23567a49ef0371d1cebe4f8f7082c"
+    },
+    {
+      "path": "DeskTools/Scripts/build.sh",
+      "bytes": 3729,
+      "sha256": "2f2e3c76759deebd2b49d9deb124ea08370292488dd60c57d80b248d8538fad0"
+    },
+    {
+      "path": "DeskTools/Scripts/install.sh",
+      "bytes": 2730,
+      "sha256": "3d17bbf26ef99dbc9ba315f6b78955ea049cc8fcfaf6b7c9f82ec9513a68d8a5"
+    },
+    {
+      "path": "DeskTools/Scripts/make-icons.swift",
+      "bytes": 2586,
+      "sha256": "900af782a26be28a99872c13bbf5afdc305403e7e4d96f9134946aee996e2678"
+    },
+    {
+      "path": "DeskTools/Scripts/package.py",
+      "bytes": 3860,
+      "sha256": "7c243b45d503d58cd21a649d6b4855e9b6af27f4fc7303d6c218cebabf5f94ee"
+    },
+    {
+      "path": "DeskTools/Scripts/test.sh",
+      "bytes": 128,
+      "sha256": "fd8bb75c9835c070c0aca847c99185b7fbb3754ed9739d652e68ab2c90e650ba"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureCore/CaptureOutput.swift",
+      "bytes": 1222,
+      "sha256": "6e7288eea86d1ec4aec8e9528117dff3d029fbc95b719804141cef8da00db90c"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureCore/CapturePreview.swift",
+      "bytes": 1083,
+      "sha256": "e1c89ad29dd6c3a84d5e6ec1855ff9ddf735b3b20d40ea2c51f9fa4c578f5a0c"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureCore/CaptureRequest.swift",
+      "bytes": 1603,
+      "sha256": "01c01f7adf907ef4c77269a073022ac92053759e1f26ce47502ad146b2b28666"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureCore/ImportedDocument.swift",
+      "bytes": 4214,
+      "sha256": "b45cd67c4cdcac2843ab937f2c9c524072b7d8f0ebf3ac25c3c606f368c3883a"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureCore/Recognition.swift",
+      "bytes": 11861,
+      "sha256": "33dfeaf06dd5118e64987ba3232626436a003df75f7785875146fd062c37ebcd"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureCore/RecognizedTable.swift",
+      "bytes": 4680,
+      "sha256": "45568db1f008f8101a497c41eb6d8bbd346026545a692073b21332897dff8a99"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureCore/TableRecognition.swift",
+      "bytes": 3727,
+      "sha256": "56126d14601802e7f5295d2edd443ac7a8198a966aaf0f44c3c89eac93c2a593"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureCore/TableSpreadsheet.swift",
+      "bytes": 6003,
+      "sha256": "db52a0bf957d4b9267638fc89e6fc80f049ddf25d6ffcc0f5c8a229d71b4d2b5"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureApp.swift",
+      "bytes": 13957,
+      "sha256": "bcc05405ed4715f46662bbc63bc99e97363154e3ad1dace6a431f6596fb5f82a"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureDeviceImport.swift",
+      "bytes": 6381,
+      "sha256": "f6139a35c7a010ef8156bdd9177cce1b32b06998d086901f5a1d77ef3a755bbe"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureLoginItem.swift",
+      "bytes": 2102,
+      "sha256": "9aed1304f95342eeb09e050ea2a1d3a22df52715cfe556adc4ac78d1d78f3b6b"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureMenuLauncher.swift",
+      "bytes": 2501,
+      "sha256": "249061f1c5a3de9d97c07f5aed0d2f6ae40c065d29b05d2eecd9136d4534f088"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureModel.swift",
+      "bytes": 27592,
+      "sha256": "a43e0b03cadb4d8213748f4e96324a84782fe2652b18761d531660e654bdeb14"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureScreenAccess.swift",
+      "bytes": 3260,
+      "sha256": "8b1350b400128aee1c8f7fb49118c5f6112c2846c88c15dea28c01c207985129"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureSettings.swift",
+      "bytes": 9399,
+      "sha256": "7295b99ec44ff799d147b84dd927bd541c38a1fc730987dfaef515d5db1d6686"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureShortcutRecorder.swift",
+      "bytes": 3568,
+      "sha256": "33bb70ca9bc137fac6c15744dd5950c39f9d4d773646b548c9eb5747822c81e1"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureShortcuts.swift",
+      "bytes": 6031,
+      "sha256": "1efbb7ca1e6dffd48560e27ae23ad6aa2f18f210450f93700c6547e1f6d55c2e"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureSpeech.swift",
+      "bytes": 12602,
+      "sha256": "7eb8c5c9736b390defc6af2e8062fa381199cd4211495b73e30f919e2ac62e2f"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureTableView.swift",
+      "bytes": 7741,
+      "sha256": "08e26b89527bd4f8aa1db7e769234ffcaae9f96dd9306cf01dd1032dde5700ac"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/CaptureView.swift",
+      "bytes": 6830,
+      "sha256": "24de8ba9d98948e2e9fc2768bc6fc16bff02a041358b0a5be407ba248aa9bceb"
+    },
+    {
+      "path": "DeskTools/Sources/CaptureText/SelectionOverlay.swift",
+      "bytes": 5680,
+      "sha256": "b910be0e3902571c3f157c0137e5dfcbc2522e322ca11231d2c06666653bda2d"
+    },
+    {
+      "path": "DeskTools/Sources/DeskCore/BoundedFile.swift",
+      "bytes": 2091,
+      "sha256": "710f33b8c84724de04b69df8e8b93f50da4ea51d04ca53d456336d6cc4d41c5d"
+    },
+    {
+      "path": "DeskTools/Sources/DeskCore/Localization.swift",
+      "bytes": 592,
+      "sha256": "66aa93dbbe797b9e65230ffc99bacdc9c712ba35859e40ee98cadac1882f2891"
+    },
+    {
+      "path": "DeskTools/Sources/DeskCore/Resources/Localization/en.lproj/Localizable.strings",
+      "bytes": 65308,
+      "sha256": "5abd9be83a5127d5c7b3f6a7c6a30ec33e4654f16957b398ed88dd7c77182b24"
+    },
+    {
+      "path": "DeskTools/Sources/DeskCore/Resources/Localization/zh-Hans.lproj/Localizable.strings",
+      "bytes": 59542,
+      "sha256": "bf8bfc45da647900ad2276d345b70ef76bcf13fa3329e1d90dee9361f3fa1376"
+    },
+    {
+      "path": "DeskTools/Sources/DeskCore/Resources/Localization/zh-Hant.lproj/Localizable.strings",
+      "bytes": 59548,
+      "sha256": "aa39ef418c9499852d0ad311149914104610b8d78f4fc59acf4c94a2eeb98327"
+    },
+    {
+      "path": "DeskTools/Sources/DeskUI/AppSupport.swift",
+      "bytes": 8216,
+      "sha256": "c6c5f87aa76c6257e60a1db9ca33d11fee7308877f52a6b8f89350f03cbac605"
+    },
+    {
+      "path": "DeskTools/Sources/DeskUI/NoteDestinationsMenu.swift",
+      "bytes": 1708,
+      "sha256": "97b4c99fde6bf57b49f284ebc9e741c09954fd0599fd7cbc739e25ac598e8147"
+    },
+    {
+      "path": "DeskTools/Sources/DeskUI/TransientFeedback.swift",
+      "bytes": 1724,
+      "sha256": "1a622fbb87576630737c50618100d8152b8d6930cd0fdd5943c1f7329b5c3945"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CaptureCoreWorkflowTests.swift",
+      "bytes": 19950,
+      "sha256": "8505988a4dd1498356181cc524ce6aa928069bad6fa9a5cec5c6d0753d5048d7"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CaptureDeviceMenuTests.swift",
+      "bytes": 7826,
+      "sha256": "fb99e8477b58d6d455030b6ee1d4cc97623b1605821a38d96a2d24a439d71209"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CaptureLanguageTests.swift",
+      "bytes": 1962,
+      "sha256": "3955179901d5712700ceeca6eb6c89eca6768b7359051c2d28d431b00b242518"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CaptureLoginItemTests.swift",
+      "bytes": 2218,
+      "sha256": "bb374f7207aa1a6c9e6179ecd517b9c8b03b44fe733c96bdb83e4f7b71d08827"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CaptureMenuSelectionTests.swift",
+      "bytes": 9235,
+      "sha256": "e9cd7b344b44672f0da601df2c988d31d8ee310ca2bdb7c0506d6db0d6362f26"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CapturePreviewTests.swift",
+      "bytes": 1098,
+      "sha256": "b7828bb439b8c2b9b4e14a4d97bbca61fa3940236859440566ac2d8a518fe1bf"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CaptureScreenAccessTests.swift",
+      "bytes": 5080,
+      "sha256": "3b4b5bbb2356d4f7b0b11c7b7758fdcccd658be15de4365253907936cd32aabc"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CaptureSpeechTests.swift",
+      "bytes": 9717,
+      "sha256": "b02c9c46817f30124bb2f37b24a192ea0157c3bd0825a147fb91839f6675edb9"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CaptureTableTests.swift",
+      "bytes": 3919,
+      "sha256": "691e4ba5a4e9da4ffaefe7541175a7f36a203cf6dada2e61cf8d89ad7ed10501"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/CoreTests.swift",
+      "bytes": 3288,
+      "sha256": "40c032f17f07fcb906098fd45eeb4264427ba7f5e861d6ad20f508b54cc4080e"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/SidebarAndImportTests.swift",
+      "bytes": 9760,
+      "sha256": "c81d15705c701e594da8da56c027ca5d8282b9da057ed206ee840f6a10359efd"
+    },
+    {
+      "path": "DeskTools/Tests/DeskToolsTests/WorkflowTests.swift",
+      "bytes": 2552,
+      "sha256": "15022b107c7d0314f12108c4ee294c95e59a64f2a68920e34956034e732de9bf"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 35149,
+      "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2029,
+      "sha256": "0f683a0e5f61354e16b98a502424b12d35eb3abeb52d5036a497567b4aebeaa2"
+    },
+    {
+      "path": "SECURITY.md",
+      "bytes": 763,
+      "sha256": "001ff77a4ad5acb43802cfba1cb65612184660ba428ca11cd6c94a1abff338ce"
+    },
+    {
+      "path": "SIGNING.md",
+      "bytes": 591,
+      "sha256": "685e2f5fee615f66187758c3c36da94c68eccd57e2c6f6d0073106aa0640cb3e"
+    },
+    {
+      "path": "Shared/AppLocalizationKit/Package.swift",
+      "bytes": 457,
+      "sha256": "9588dd23cd86e80216b7b17a961aac141cd98392e4502d3fcb5cc1244b73edd5"
+    },
+    {
+      "path": "Shared/AppLocalizationKit/Sources/AppLocalizationKit/AppLocalizer.swift",
+      "bytes": 5248,
+      "sha256": "c7669743bab2757de9002058681c01fa1e4b1828810de92f4b2816df451166aa"
+    },
+    {
+      "path": "Shared/AppLocalizationKit/Tests/AppLocalizationKitTests/AppLocalizerTests.swift",
+      "bytes": 2347,
+      "sha256": "a17526e6daa5753bb50c7f8cf54fa797f3e3f09ede39bd2d715ac4eee1fa279a"
+    },
+    {
+      "path": "Shared/AppLocalizationKit/Tests/AppLocalizationKitTests/Fixtures/LocalizationFixture.bundle/Info.plist",
+      "bytes": 373,
+      "sha256": "6496a60b4b8ac8cf4f74a7645ac8fdfd662f7d6aeab08aebaf70793977aeca32"
+    },
+    {
+      "path": "Shared/AppLocalizationKit/Tests/AppLocalizationKitTests/Fixtures/LocalizationFixture.bundle/en.lproj/Localizable.strings",
+      "bytes": 67,
+      "sha256": "73223e8cc4d1464bddd2ab630b3ead85f94d791ab588424278b05eca95aaf09d"
+    },
+    {
+      "path": "Shared/AppLocalizationKit/Tests/AppLocalizationKitTests/Fixtures/LocalizationFixture.bundle/zh-Hans.lproj/Localizable.strings",
+      "bytes": 27,
+      "sha256": "b86d1275f4bffc38cea14a52477feb58a82c245eaabe9ccd222a4552582b64aa"
+    },
+    {
+      "path": "Shared/AppLocalizationKit/Tests/AppLocalizationKitTests/Fixtures/LocalizationFixture.bundle/zh-Hant.lproj/Localizable.strings",
+      "bytes": 27,
+      "sha256": "4a20b23d7d8b82de32523cf21dca75a07213f9c0caa68e11bfc43f64a90b537f"
+    },
+    {
+      "path": "Shared/LocalWorkflowKit/Package.swift",
+      "bytes": 413,
+      "sha256": "e0aa3546600005f1870ea76c8c4547dafee4885c4ce2cb295207a0397ed3a4d2"
+    },
+    {
+      "path": "Shared/LocalWorkflowKit/Sources/LocalWorkflowKit/TextRecipe.swift",
+      "bytes": 1709,
+      "sha256": "dd172406a1b00d726c3777368749112bdf6035de0a2d2d5bea451578c7872209"
+    },
+    {
+      "path": "Shared/LocalWorkflowKit/Sources/LocalWorkflowKit/WorkflowDraft.swift",
+      "bytes": 6319,
+      "sha256": "2beba02749097c5f04247abaf74787cf59a8f9643141c1d4079ae52eb52dc100"
+    },
+    {
+      "path": "Shared/LocalWorkflowKit/Sources/LocalWorkflowKit/WorkflowFiles.swift",
+      "bytes": 5714,
+      "sha256": "f531300a55b5d5c5ea18ff0f74fd9ce68c1d0d6ecfac9123fe511e184d0fff43"
+    },
+    {
+      "path": "Shared/LocalWorkflowKit/Tests/LocalWorkflowKitTests/WorkflowTests.swift",
+      "bytes": 4538,
+      "sha256": "11ae94f4b5de4a2ce5815a29668961c3612989177d3464b59b66d5f437faad64"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "bytes": 539,
+      "sha256": "82b69722ceb49dac5e876d1f873b972aa90716e1c58cd860c90a0d6b0a1481cf"
+    },
+    {
+      "path": "docs/localization.md",
+      "bytes": 3463,
+      "sha256": "e8f9223a5e6e48c343b0c99ff379e690aaacba46017549c645cf942160b5fe57"
+    },
+    {
+      "path": "scripts/localization/app-info.json",
+      "bytes": 4761,
+      "sha256": "7f7b5694343c6432ef0eeac8e14c565dbe1527adda778d9b535adac5d553e452"
+    },
+    {
+      "path": "scripts/localization/check-catalogs.py",
+      "bytes": 5033,
+      "sha256": "248f66da1ca4a24af60d48c3ddfb79f3a5bde8b084f2982a4a611344fb8bab43"
+    },
+    {
+      "path": "scripts/localization/collect-source-keys.py",
+      "bytes": 2859,
+      "sha256": "383d5775e8993bd7cc21ed6f6fadfb64a5912f71f9619d98532b44e8d16e4c7c"
+    },
+    {
+      "path": "scripts/localization/context-overrides.json",
+      "bytes": 47720,
+      "sha256": "0c962bee80c6bfaf5da3eee0619dd1d50ddc94d08afaa550643da39807e1728b"
+    },
+    {
+      "path": "scripts/localization/english-overrides.json",
+      "bytes": 16183,
+      "sha256": "2a4f1098d13d7fcac0d5bc2d5bfa11b4e4a17fea97148c58d66473295d020893"
+    },
+    {
+      "path": "scripts/localization/english-ui.json",
+      "bytes": 15299,
+      "sha256": "2516f079467e935c92605ebf58f13794cfc8071540ecbdd92382a159d8842d6d"
+    },
+    {
+      "path": "scripts/localization/generate-catalogs.py",
+      "bytes": 4818,
+      "sha256": "36b0841d3abb1924aec1748ee48acee1a19a6a1cbe4fcb07a3aff31c4b306b9c"
+    },
+    {
+      "path": "scripts/localization/localize-swift.swift",
+      "bytes": 10995,
+      "sha256": "9b739b127a589a0d49dc615df65c389f2d407984b665d8819226d757a3441e77"
+    },
+    {
+      "path": "scripts/localization/package-resources.py",
+      "bytes": 2796,
+      "sha256": "27d5989d88f9efc9bb7248e3d2f4da725bc7e52a5f06997d4d51a059f01c9945"
+    },
+    {
+      "path": "scripts/localization/simplify-catalog.swift",
+      "bytes": 1612,
+      "sha256": "a57c567ecc13f0226dff062eacec050db83c3a5a77817530acac83a6999897fe"
+    },
+    {
+      "path": "scripts/localization/translate-catalog.swift",
+      "bytes": 2273,
+      "sha256": "db37713fb62d3d4d9c4e9b739b5ca9b13b349d302f9f653eb73bb537590064d4"
+    }
+  ]
+}
