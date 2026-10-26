@@ -73,6 +73,36 @@ struct CaptureSettings: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
             }.formStyle(.grouped).tabItem { Label(L10n.text("一般"), systemImage: "gearshape") }.tag("general")
+            Form {
+                Section(L10n.text("精準重讀")) {
+                    Toggle(L10n.text("短行或網址辨識後開啟校對"), isOn: $model.offerPrecision)
+                        .accessibilityIdentifier("capture.precision.automatic-review")
+                    Text(L10n.text("一般辨識先保留原文；校對候選需按採用才會複製。未有真實留出樣本驗證，自動替換保持停用。"))
+                        .font(.caption).foregroundStyle(.secondary)
+                    Text(L10n.text("上次選區保留於記憶體兩分鐘，供精準重讀；不儲存圖片歷史。"))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Section(L10n.text("本機第二引擎")) {
+                    Toggle(L10n.text("精準重讀加入第二引擎候選"), isOn: $model.secondaryEnabled)
+                        .accessibilityIdentifier("capture.precision.secondary")
+                        .disabled(!model.modelsInstalled)
+                    Text(L10n.text("Apple Silicon 可選模型包約 86 MB，涵蓋多語言、英文及韓文。只在重讀時載入，完成即釋放；圖片不會上傳。"))
+                        .font(.caption).foregroundStyle(.secondary)
+                    if !model.modelsInstalled {
+                        Button(L10n.text("下載模型包")) { model.installModels() }.disabled(model.downloadingModels)
+                    } else {
+                        Text(L10n.text("模型已安裝；只在精準重讀時載入。"))
+                    }
+                    if model.downloadingModels {
+                        ProgressView()
+                        Button(L10n.text("取消下載")) { model.cancelModelDownload() }
+                    }
+                    Text(model.modelDownloadStatus).font(.caption).foregroundStyle(.secondary)
+                    Text(L10n.text("第二引擎每次最多 12 行；較大選區仍可使用系統引擎。結果不保證比原文準確，請對照原圖。"))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }.formStyle(.grouped).tabItem { Label(L10n.text("精準"), systemImage: "text.magnifyingglass") }.tag(
+                "precision")
             VStack(alignment: .leading, spacing: 12) {
                 Text(L10n.text("自訂詞")).font(.headline)
                 Text(L10n.text("每行一個詞，協助辨認人名、術語及專有名詞。最多採用 500 個詞。")).foregroundStyle(.secondary)

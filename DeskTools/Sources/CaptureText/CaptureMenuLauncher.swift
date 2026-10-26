@@ -1,10 +1,13 @@
 import AppKit
 
 enum CaptureRegionRequest: Equatable {
-    case text, withLineBreaks, withoutLineBreaks, repeatSelection, barcodes
+    case precise, reread, video, text, withLineBreaks, withoutLineBreaks, repeatSelection, barcodes
 
     @MainActor func begin(on model: CaptureModel) {
         switch self {
+        case .precise: model.capture(precise: true)
+        case .reread: model.reread()
+        case .video: model.capture(video: true)
         case .text: model.capture()
         case .withLineBreaks: model.capture(singleLine: false)
         case .withoutLineBreaks: model.capture(singleLine: true)

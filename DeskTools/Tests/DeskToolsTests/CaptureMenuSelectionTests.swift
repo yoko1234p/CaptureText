@@ -15,12 +15,13 @@ final class CaptureMenuSelectionTests: XCTestCase {
             let defaults = try XCTUnwrap(UserDefaults(suiteName: domain))
             let model = CaptureModel(defaults: defaults)
             model.hasLastSelection = true
+            model.canReread = true
             let delegate = CaptureDelegate(
                 model: model, shortcuts: CaptureShortcutStore(defaults: defaults), captureLauncher: launcher)
             let menu = NSMenu()
             delegate.menuNeedsUpdate(menu)
             let expected: [CaptureRegionRequest] = [
-                .text, .withLineBreaks, .withoutLineBreaks, .repeatSelection, .barcodes,
+                .text, .withLineBreaks, .withoutLineBreaks, .repeatSelection, .barcodes, .precise, .reread, .video,
             ]
             for (index, request) in expected.enumerated() {
                 delegate.menuWillOpen(menu)
@@ -138,8 +139,8 @@ final class CaptureMenuSelectionTests: XCTestCase {
             view.mouseDown(with: try Self.mouse(.leftMouseDown, at: NSPoint(x: 80, y: 60)))
             view.mouseDragged(with: try Self.mouse(.leftMouseDragged, at: NSPoint(x: 20, y: 30)))
             view.mouseUp(with: try Self.mouse(.leftMouseUp, at: NSPoint(x: 20, y: 30)))
-            XCTAssertEqual(deliveredRect, CGRect(x: 40, y: 80, width: 120, height: 60))
-            XCTAssertEqual(deliveredSize, CGSize(width: 120, height: 60))
+            XCTAssertEqual(deliveredRect, CGRect(x: 32, y: 72, width: 136, height: 76))
+            XCTAssertEqual(deliveredSize, CGSize(width: 136, height: 76))
         }
     }
 

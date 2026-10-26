@@ -32,7 +32,11 @@ struct CaptureView: View {
                 } label: {
                     Label(L10n.text("框選文字"), systemImage: "viewfinder")
                 }.buttonStyle(.borderedProminent).tint(.teal)
+                Button(L10n.text("精準重讀")) { model.reread() }.disabled(!model.canReread || model.busy)
+                    .accessibilityIdentifier("capture.precision.reread")
                 Menu {
+                    Button(L10n.text("精準框選")) { model.capture(precise: true) }
+                    Button(L10n.text("影片多畫面重讀")) { model.capture(video: true) }
                     Button(L10n.text("保留換行")) { model.capture(singleLine: false) }
                     Button(L10n.text("合併成一行")) { model.capture(singleLine: true) }
                     Button(L10n.text("框選表格")) { model.capture(table: true) }

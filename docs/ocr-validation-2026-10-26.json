@@ -1,0 +1,56 @@
+{
+  "synthetic": true,
+  "sourceGroups": 40,
+  "calibrationSources": 10,
+  "holdoutSources": 30,
+  "autoReplacementEnabled": false,
+  "groups": {
+    "all": {
+      "images": 160,
+      "baselineExact": 97,
+      "visionCandidateAvailable": 106,
+      "secondaryExact": 98,
+      "anyCandidateAvailable": 127,
+      "baselineCER": 0.020283723245395718,
+      "baselinePunctuationExact": 145,
+      "secondaryFailures": 3,
+      "secondaryRegressions": 26
+    },
+    "holdout": {
+      "images": 120,
+      "baselineExact": 74,
+      "visionCandidateAvailable": 81,
+      "secondaryExact": 70,
+      "anyCandidateAvailable": 95,
+      "baselineCER": 0.01692103516921035,
+      "baselinePunctuationExact": 107,
+      "secondaryFailures": 2,
+      "secondaryRegressions": 23
+    },
+    "urlHoldout": {
+      "images": 48,
+      "baselineExact": 23,
+      "visionCandidateAvailable": 26,
+      "secondaryExact": 22,
+      "anyCandidateAvailable": 29,
+      "baselineCER": 0.010150044130626656,
+      "baselinePunctuationExact": 48,
+      "secondaryFailures": 0,
+      "secondaryRegressions": 6
+    }
+  },
+  "timingMilliseconds": {
+    "milliseconds": {
+      "median": 36.28,
+      "p95": 72.47
+    },
+    "precisionMilliseconds": {
+      "median": 71.4,
+      "p95": 117.61
+    },
+    "secondaryMilliseconds": {
+      "median": 131.55,
+      "p95": 137.24
+    }
+  }
+}

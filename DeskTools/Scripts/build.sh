@@ -15,6 +15,7 @@ for architecture in "${build_architectures[@]}"; do
     architecture_flags+=(--arch "$architecture")
 done
 for name in "$@"; do swift build -c "$configuration" "${architecture_flags[@]}" --product "$name"; done
+swift build -c "$configuration" "${architecture_flags[@]}" --product CaptureOCRWorker
 binary_directory="$(swift build -c "$configuration" "${architecture_flags[@]}" --show-bin-path)"
 mkdir -p dist
 xcrun swift Scripts/make-icons.swift dist
@@ -57,6 +58,7 @@ for name in "$@"; do
             fi
         fi
     fi
+    codesign --force --sign "$identity" --timestamp=none "dist/$name.app/Contents/MacOS/CaptureOCRWorker"
     codesign --force --sign "$identity" --timestamp=none "dist/$name.app"
     codesign --verify --deep --strict "dist/$name.app"
     lipo -archs "dist/$name.app/Contents/MacOS/$name"

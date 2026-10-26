@@ -1,3 +1,40 @@
+# CaptureText v0.10.0-preview.1
+
+## English
+
+- Preserve raw OCR URL whitespace, punctuation and tokens; formatting suggestions require explicit review.
+- Add Precision Review, reread of the last owned crop, editable candidates and changed-span highlighting. Cancellation and stale results cannot change the clipboard; additive rereads replace the last segment once.
+- Add optional local PaddleOCR models via a native ONNX worker, with verified downloads, bounded input, a timeout and process exit after each request. Apple Silicon only for this optional pack.
+- Add manual three-frame video rereading with display checks and changed-subtitle rejection.
+- Recover gracefully when automatic language detection returns a region too thin for Vision.
+- English, Traditional Chinese and Simplified Chinese UI and documentation; independent fixture splits and release-mode OCR evaluation.
+
+Automatic replacement is disabled. Synthetic candidate availability is not automatic recognition accuracy. Real video, physical display hot-plug and other hardware need further testing. This arm64 preview is ad-hoc signed and **not notarized**. Download the app ZIP and source ZIP; verify `SHA256SUMS`. Move the app to Applications and use the macOS Privacy & Security “Open Anyway” flow if needed. The optional model pack is about 89 MB installed and is not included in the ZIP.
+
+## 繁體中文
+
+- 保留 OCR 原文嘅網址空白、標點及 token；排版建議必須先校對。
+- 新增精準框選、重讀上次原圖、可編輯候選及差異提示。取消或舊任務不會更改剪貼簿；累積重讀只替換該段一次。
+- 可選原生 ONNX／PaddleOCR 第二引擎，下載會校驗；限制選區、設定逾時，完成即退出程序。模型包支援 Apple Silicon。
+- 新增手動三畫面影片重讀，檢查螢幕配置，不合併不同字幕。
+- 修正自動語言補讀遇到過薄區域時，連已辨識結果都失敗嘅問題。
+- 英／繁中／簡中介面；提供獨立樣本分組及可重現評測。
+
+自動替換保持停用；合成圖中出現正確候選不代表程式會自動選中。真實影片、實體多螢幕插拔及其他硬件仍待驗證。此 arm64 預覽版使用臨時簽署，**未經 Apple 公證**。請下載 App 及源碼 ZIP，核對 `SHA256SUMS`；移至「應用程式」，有需要時使用 macOS「私隱與保安 → 仍要開啟」。可選模型包磁碟約 89 MB，並未放入 ZIP。
+
+## 简体中文
+
+- 保留 OCR 原文的网址空白、标点和 token；排版建议须先校对。
+- 新增精准框选、重读上次原图、可编辑候选及差异提示。取消或旧任务不会改动剪贴板；累积重读只替换该段一次。
+- 可选原生 ONNX／PaddleOCR 第二引擎，校验下载、限制选区、设置超时，完成即退出进程。模型包支持 Apple Silicon。
+- 新增手动三画面视频重读，检查屏幕配置，不合并不同字幕。
+- 修复自动语言补读遇到过薄区域时丢失已有识别结果的问题。
+- 英／繁中／简中界面；提供独立样本分组及可复现评测。
+
+自动替换保持停用；合成图中有正确候选不等于程序会自动选中。真实视频、实体多屏插拔和其他硬件仍待验证。此 arm64 预览版使用临时签名，**未经 Apple 公证**。下载 App 和源码 ZIP 并核对 `SHA256SUMS`；移至“应用程序”，如被系统阻止请使用“隐私与安全性 → 仍要打开”。可选模型包磁盘约 89 MB，未包含在 ZIP 中。
+
+---
+
 # CaptureText v0.9.0-preview.1
 
 ## English — First public preview

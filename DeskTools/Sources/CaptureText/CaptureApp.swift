@@ -7,6 +7,7 @@ import SwiftUI
 @MainActor final class CaptureDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let model: CaptureModel
     let shortcuts: CaptureShortcutStore
+    private lazy var precisionPanel = CapturePrecisionPanel(model: model)
     private let captureLauncher: CaptureMenuLauncher
     var window: NSWindow!
     var settings: NSWindow!
@@ -76,9 +77,12 @@ import SwiftUI
                 AppSupport.show(self.window)
             }
         }
+        model.showReviewPanel = { [weak self] in self?.precisionPanel.show() }
+        model.hideReviewPanel = { [weak self] in self?.precisionPanel.hide() }
         model.hideWindow = { [weak self] in
             self?.window.orderOut(nil)
             self?.settings.orderOut(nil)
+            self?.precisionPanel.hide()
         }
         shortcuts.registerChange = { [weak self] action, shortcut in
             self?.register(action, shortcut: shortcut) ?? false
@@ -147,6 +151,11 @@ import SwiftUI
             title(L10n.text("重取上次選區"), .repeatSelection), #selector(lastCapture(_:)), identifier: "capture.menu.repeat",
             enabled: model.hasLastSelection)
         item(title(L10n.text("QR／條碼"), .barcodes), #selector(barcode(_:)), identifier: "capture.menu.barcode")
+        item(title(L10n.text("精準框選"), .precise), #selector(preciseCapture(_:)), identifier: "capture.menu.precise")
+        item(
+            title(L10n.text("精準重讀上次圖片"), .reread), #selector(reread(_:)), identifier: "capture.menu.reread",
+            enabled: model.canReread && !model.busy)
+        item(title(L10n.text("影片多畫面重讀"), .video), #selector(videoCapture(_:)), identifier: "capture.menu.video")
         item(L10n.text("開啟圖片…"), #selector(openImage(_:)))
         item(L10n.text("從 iPhone／iPad 匯入…"), #selector(importFromDevice(_:)), identifier: "capture.menu.device")
         menu.addItem(.separator())
@@ -190,6 +199,9 @@ import SwiftUI
             return
         }
         switch action {
+        case .precise: preciseCapture()
+        case .reread: reread()
+        case .video: videoCapture()
         case .capture: capture()
         case .withLineBreaks: captureWithLines()
         case .withoutLineBreaks: captureWithoutLines()
@@ -207,6 +219,9 @@ import SwiftUI
         if captureLauncher.isTracking { status?.menu?.cancelTracking() }
     }
 
+    @objc func preciseCapture(_ sender: Any? = nil) { requestCapture(.precise, sender: sender) }
+    @objc func reread(_ sender: Any? = nil) { requestCapture(.reread, sender: sender) }
+    @objc func videoCapture(_ sender: Any? = nil) { requestCapture(.video, sender: sender) }
     @objc func capture(_ sender: Any? = nil) { requestCapture(.text, sender: sender) }
     @objc func captureWithLines(_ sender: Any? = nil) { requestCapture(.withLineBreaks, sender: sender) }
     @objc func captureWithoutLines(_ sender: Any? = nil) { requestCapture(.withoutLineBreaks, sender: sender) }
@@ -262,6 +277,7 @@ import SwiftUI
         captureLauncher.cancelPending()
         model.cancel(show: false)
         model.stopSpeaking()
+        model.cancelModelDownload()
     }
 }
 

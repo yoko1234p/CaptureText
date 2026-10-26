@@ -5,12 +5,15 @@ import DeskCore
 import Foundation
 
 enum CaptureShortcutAction: String, CaseIterable, Identifiable {
-    case capture, withLineBreaks, withoutLineBreaks, repeatSelection, barcodes
+    case precise, reread, video, capture, withLineBreaks, withoutLineBreaks, repeatSelection, barcodes
     case toggleLineBreaks, toggleAppend, clearAppend, toggleSpeech, stopSpeech
 
     var id: String { rawValue }
     var title: String {
         switch self {
+        case .precise: return L10n.text("精準框選")
+        case .reread: return L10n.text("精準重讀上次圖片")
+        case .video: return L10n.text("影片多畫面重讀")
         case .capture: return L10n.text("框選文字（依一般設定）")
         case .withLineBreaks: return L10n.text("框選文字 · 保留換行")
         case .withoutLineBreaks: return L10n.text("框選文字 · 合併成一行")

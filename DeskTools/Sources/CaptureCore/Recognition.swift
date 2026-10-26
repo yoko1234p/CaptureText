@@ -4,7 +4,7 @@ import Foundation
 import ImageIO
 import Vision
 
-public enum OCRLanguage: String, CaseIterable, Identifiable, Sendable {
+public enum OCRLanguage: String, CaseIterable, Identifiable, Codable, Sendable {
     case automatic, traditionalChinese, simplifiedChinese, japanese, korean, english
     case traditionalCantonese, simplifiedCantonese, french, italian, german, spanish, portuguese
     case russian, ukrainian, thai, vietnamese, arabic, turkish, indonesian, czech, danish, dutch
@@ -154,7 +154,15 @@ public enum Recognition {
     )
         throws -> String
     {
-        var observations = try textObservations(image, language: language, words: words, cancellation: cancellation)
+        try document(image, language: language, words: words, singleLine: singleLine, cancellation: cancellation).text
+    }
+
+    public static func document(
+        _ image: CGImage, language: OCRLanguage, words: [String] = [], singleLine: Bool = false,
+        correction: Bool = true, cancellation: RecognitionCancellation? = nil
+    ) throws -> OCRDocument {
+        var observations = try textObservations(
+            image, language: language, words: words, correction: correction, cancellation: cancellation)
         if language == .automatic {
             let detector = VNDetectTextRectanglesRequest()
             try cancellation?.begin(detector)
@@ -167,12 +175,24 @@ public enum Recognition {
             let regions = (detector.results ?? []).map(\.boundingBox).filter { region in
                 !observations.contains { covers($0.boundingBox, region) }
             }
-            for region in regions {
+            for region in regions.prefix(24) {
                 try cancellation?.check()
                 // Text detection often omits punctuation at the edge of a line.
                 let padded = region.insetBy(dx: -0.03, dy: -0.015).intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
-                let recovered = try textObservations(
-                    image, language: language, words: words, region: padded, cancellation: cancellation)
+                // Region recovery is best effort: Vision rejects very thin detections.
+                // Such a region must not discard text already recognized elsewhere.
+                guard padded.width * Double(image.width) >= 4, padded.height * Double(image.height) >= 4 else {
+                    continue
+                }
+                let recovered: [VNRecognizedTextObservation]
+                do {
+                    recovered = try textObservations(
+                        image, language: language, words: words, region: padded,
+                        correction: correction, cancellation: cancellation)
+                } catch {
+                    try cancellation?.check()
+                    continue
+                }
                 for observation in recovered
                 where !observations.contains(where: { covers($0.boundingBox, observation.boundingBox) }) {
                     observations.append(observation)
@@ -185,14 +205,15 @@ public enum Recognition {
                 }
             }
         }
-        let lines = observations.compactMap { $0.topCandidates(1).first?.string }
-        guard !lines.isEmpty else { throw RecognitionTextError.noText }
-        let firstLine = observations[0].boundingBox
-        let oneVisualLine = observations.allSatisfy { observation in
-            let overlap = firstLine.intersection(observation.boundingBox)
-            return !overlap.isNull && overlap.height >= min(firstLine.height, observation.boundingBox.height) * 0.5
+        let blocks = observations.compactMap { observation -> OCRBlock? in
+            let candidates = observation.topCandidates(3).map {
+                OCRTextCandidate(text: $0.string, score: $0.confidence)
+            }
+            guard !candidates.isEmpty else { return nil }
+            return OCRBlock(bounds: observation.boundingBox, candidates: candidates)
         }
-        return RecognizedTextLayout.join(lines, singleLine: singleLine, oneVisualLine: oneVisualLine)
+        guard !blocks.isEmpty else { throw RecognitionTextError.noText }
+        return OCRDocument(blocks: blocks, singleLine: singleLine, width: image.width, height: image.height)
     }
 
     private static func covers(_ existing: CGRect, _ candidate: CGRect) -> Bool {
@@ -202,7 +223,7 @@ public enum Recognition {
     }
 
     static func textObservations(
-        _ image: CGImage, language: OCRLanguage, words: [String], region: CGRect? = nil,
+        _ image: CGImage, language: OCRLanguage, words: [String], region: CGRect? = nil, correction: Bool = true,
         cancellation: RecognitionCancellation?
     ) throws -> [VNRecognizedTextObservation] {
         let request = VNRecognizeTextRequest()
@@ -214,7 +235,7 @@ public enum Recognition {
         request.recognitionLanguages = language.recognitionCodes(supported: supported)
         guard !request.recognitionLanguages.isEmpty else { throw DeskError.invalid(L10n.text("系統不支援選擇的 OCR 語言。")) }
         request.automaticallyDetectsLanguage = language == .automatic
-        request.usesLanguageCorrection = true
+        request.usesLanguageCorrection = correction
         request.customWords = Array(words.prefix(500))
         if let region { request.regionOfInterest = region }
         try cancellation?.check()
@@ -237,34 +258,10 @@ public enum Recognition {
 }
 
 enum RecognizedTextLayout {
-    static func join(_ lines: [String], singleLine: Bool, oneVisualLine: Bool) -> String {
-        if oneVisualLine, let url = isolatedURL(lines) { return url }
-        return lines.joined(separator: singleLine ? " " : "\n")
-    }
-
-    private static func isolatedURL(_ lines: [String]) -> String? {
-        guard !lines.isEmpty, lines.count <= 16 else { return nil }
-        let compact = lines.joined().filter { !$0.isWhitespace }
-        guard compact.count <= 8_192,
-            compact.unicodeScalars.allSatisfy({ $0.isASCII && !CharacterSet.controlCharacters.contains($0) })
-        else { return nil }
-        let url: String
-        if compact.hasPrefix("https://") || compact.hasPrefix("http://") {
-            url = compact
-        } else if compact.hasPrefix("https//") || compact.hasPrefix("http//") {
-            url = compact.replacingOccurrences(of: "//", with: "://", range: compact.range(of: "//"))
-        } else if compact.hasPrefix("https:/") || compact.hasPrefix("http:/") {
-            url = compact.replacingOccurrences(of: ":/", with: "://", range: compact.range(of: ":/"))
-        } else {
-            url = compact
-        }
-        guard url.hasPrefix("https://") || url.hasPrefix("http://"),
-            let components = URLComponents(string: url), let host = components.host,
-            host.contains("."), components.user == nil, components.password == nil,
-            components.query != nil,
-            !url.dropFirst(8).contains("http://"), !url.dropFirst(8).contains("https://")
-        else { return nil }
-        return url
+    static func join(_ lines: [String], singleLine: Bool) -> String {
+        // Recognition must not silently remove whitespace or repair punctuation.
+        // Explicit, reversible formatting suggestions belong to the review UI.
+        lines.joined(separator: singleLine ? " " : "\n")
     }
 }
 

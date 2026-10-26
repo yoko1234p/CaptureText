@@ -1,10 +1,11 @@
 import AppKit
-@testable import CaptureCore
 import CoreImage
 import Darwin
 import DeskCore
 import Vision
 import XCTest
+
+@testable import CaptureCore
 
 final class GeometryTests: XCTestCase {
     func testRetinaCropFlipsYAxis() {
@@ -54,22 +55,22 @@ final class GeometryTests: XCTestCase {
 }
 
 final class RecognitionTests: XCTestCase {
-    func testStandaloneURLFragmentsDoNotGainOCRSpaces() {
+    func testRawURLFragmentsPreserveSpacesAndMissingPunctuation() {
         let fragments = ["https://example.com/explore/123?xsec_token=A B", "u_12&xsec_source=pc_user"]
         XCTAssertEqual(
-            RecognizedTextLayout.join(fragments, singleLine: false, oneVisualLine: true),
-            "https://example.com/explore/123?xsec_token=ABu_12&xsec_source=pc_user")
+            RecognizedTextLayout.join(fragments, singleLine: false),
+            fragments.joined(separator: "\n"))
         XCTAssertEqual(
-            RecognizedTextLayout.join(["https//example.com/a?b=1 2"], singleLine: false, oneVisualLine: true),
-            "https://example.com/a?b=12")
+            RecognizedTextLayout.join(["https//example.com/a?b=1 2"], singleLine: false),
+            "https//example.com/a?b=1 2")
     }
 
     func testURLCleanupLeavesOtherTextAndSeparateLinesAlone() {
-        let prose = ["https://example.com/path click here"]
-        XCTAssertEqual(RecognizedTextLayout.join(prose, singleLine: false, oneVisualLine: true), prose[0])
+        let prose = ["https://example.com/path?x=1 read more"]
+        XCTAssertEqual(RecognizedTextLayout.join(prose, singleLine: false), prose[0])
         let separateLines = ["https://example.com/a?b=1", "Read more"]
         XCTAssertEqual(
-            RecognizedTextLayout.join(separateLines, singleLine: false, oneVisualLine: false),
+            RecognizedTextLayout.join(separateLines, singleLine: false),
             separateLines.joined(separator: "\n"))
     }
 

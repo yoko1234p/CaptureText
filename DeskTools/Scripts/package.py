@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 source = Path(sys.argv[1])
-versions = {"CaptureText": ("0.9.1", "16"), "DevWorkbench": ("0.6.0", "10"), "EdgeNotes": ("0.8.0", "21")}
+versions = {"CaptureText": ("0.10.0", "17"), "DevWorkbench": ("0.6.0", "10"), "EdgeNotes": ("0.8.0", "21")}
 available = [('CaptureText', 'capturetext', True)]
 requested = sys.argv[3:] or [name for name, _, _ in available]
 if any(name not in {item[0] for item in available} for name in requested):
@@ -37,6 +37,9 @@ for name, scheme, accessory in available:
         "NSHumanReadableCopyright": "Independent implementation · 2026",
     }
     if name == "CaptureText":
+        shutil.copy2(source / "CaptureOCRWorker", contents / "MacOS" / "CaptureOCRWorker")
+        shutil.copytree(source / "DeskTools_CaptureCore.bundle", contents / "Resources" / "DeskTools_CaptureCore.bundle")
+        shutil.copytree(Path("../ThirdParty"), contents / "Resources" / "ThirdParty")
         info["NSScreenCaptureUsageDescription"] = "框選後在此 Mac 辨認螢幕文字。"
         info["CFBundleDocumentTypes"] = [{"CFBundleTypeName": "圖片",
             "LSItemContentTypes": ["public.image"], "CFBundleTypeRole": "Viewer", "LSHandlerRank": "Alternate"}]

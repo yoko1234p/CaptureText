@@ -31,6 +31,36 @@ import SwiftUI
     @Published var sound: Bool { didSet { defaults.set(sound, forKey: "sound") } }
     @Published var feedback: Bool { didSet { defaults.set(feedback, forKey: "feedback") } }
     @Published var hasLastSelection = false
+    @Published var canReread = false
+    @Published var review: OCRPrecisionResult?
+    @Published var reviewDraft = ""
+    @Published var reviewImage: NSImage?
+    @Published var reviewStatus = ""
+    @Published var reviewVisible = false
+    @Published var secondaryEnabled: Bool { didSet { defaults.set(secondaryEnabled, forKey: "secondaryOCR") } }
+    @Published var offerPrecision: Bool { didSet { defaults.set(offerPrecision, forKey: "offerPrecision") } }
+    @Published var modelsInstalled = OCRModelPack.installed
+    @Published var modelDownloadStatus = ""
+    @Published var downloadingModels = false
+    private var downloadTask: Task<Void, Never>?
+    private var retentionTask: Task<Void, Never>?
+    private struct RetainedCapture {
+        let image: CGImage
+        let options: WorkflowOptions
+        let prefix: String
+        let committedText: String?
+    }
+    private var retainedCapture: RetainedCapture?
+    private var reviewContext: RetainedCapture?
+    var showReviewPanel: () -> Void = {}
+    var hideReviewPanel: () -> Void = {}
+    var precisionOperation:
+        @Sendable (CGImage, CaptureRecognitionOptions, RecognitionCancellation) async throws -> OCRPrecisionResult = {
+            image, options, cancellation in
+            try await Task.detached(priority: .userInitiated) {
+                try OCRPrecision.recognize(image, options: options, cancellation: cancellation)
+            }.value
+        }
     let screenAccess: CaptureScreenAccess
     let speech: CaptureSpeechController
     let loginItem = CaptureLoginItem()
@@ -109,6 +139,8 @@ import SwiftUI
         speechAfterCapture = defaults.bool(forKey: "speechAfterCapture")
         sound = defaults.object(forKey: "sound") as? Bool ?? true
         feedback = defaults.object(forKey: "feedback") as? Bool ?? true
+        secondaryEnabled = defaults.bool(forKey: "secondaryOCR")
+        offerPrecision = defaults.bool(forKey: "offerPrecision")
     }
 
     private func options(barcode: Bool, quiet: Bool, returnOnCancel: Bool, singleLine: Bool?, table: Bool = false)
@@ -126,7 +158,10 @@ import SwiftUI
             speech: speechAfterCapture, sound: sound, feedback: feedback)
     }
 
-    func capture(barcode: Bool = false, last: Bool = false, singleLine: Bool? = nil, table: Bool = false) {
+    func capture(
+        barcode: Bool = false, last: Bool = false, singleLine: Bool? = nil, table: Bool = false, precise: Bool = false,
+        video: Bool = false
+    ) {
         toast.hide()
         rememberForegroundApplication()
         cancel(show: false)
@@ -185,7 +220,11 @@ import SwiftUI
                         throw DeskError.invalid(L10n.text("螢幕配置已改變，請重新框選。"))
                     }
                     captureScreen = screen
-                    recognize(crop, options: options)
+                    if precise || video {
+                        beginReview(crop, options: options, video: video)
+                    } else {
+                        recognize(crop, options: options)
+                    }
                     return
                 }
                 message = L10n.text("拖曳框選，Esc 取消。")
@@ -216,7 +255,11 @@ import SwiftUI
                                 )
                                 self.hasLastSelection = true
                             }
-                            self.recognize(crop, options: selectedOptions)
+                            if precise || video {
+                                self.beginReview(crop, options: selectedOptions, video: video)
+                            } else {
+                                self.recognize(crop, options: selectedOptions)
+                            }
                         } else {
                             self.cancel()
                         }
@@ -381,27 +424,36 @@ import SwiftUI
     private func recognize(_ source: RecognitionPages, options: WorkflowOptions) {
         guard source.count > 0 else { return }
         invalidateOperation()
+        forgetRetainedCapture()
         activeOptions = options
         let current = token
         let cancellation = RecognitionCancellation()
         recognitionCancellation = cancellation
         let operation = recognitionOperation
+        let prefix = additiveText
         busy = true
         failed = false
         message = options.recognition.kind == .barcodes ? L10n.text("正在辨認條碼…") : L10n.text("正在辨認文字…")
         if options.quiet { restoreFocus() } else { showWindow() }
         operationTask = Task {
             let result: Result<String, Error>
+            var ownedImage: CGImage?
             do {
                 var pages: [String] = []
                 var bytes = 0
                 for index in 0..<source.count {
                     try cancellation.check()
-                    let image = try await Task.detached(priority: .userInitiated) {
-                        try source.image(at: index, cancellation: cancellation)
+                    let (image, retained, thumbnail) = try await Task.detached(priority: .userInitiated) {
+                        let image = try source.image(at: index, cancellation: cancellation)
+                        let retained =
+                            index == 0 && source.count == 1 && options.recognition.kind == .text
+                            ? OCRImageBuffer.copy(image) : nil
+                        let thumbnail = index == 0 ? CapturePreview.image(image) : nil
+                        return (image, retained, thumbnail)
                     }.value
+                    guard current == token, !Task.isCancelled, !cancellation.isCancelled else { return }
                     if index == 0 {
-                        let thumbnail = CapturePreview.image(image)
+                        ownedImage = retained
                         preview = thumbnail.map {
                             NSImage(cgImage: $0, size: NSSize(width: $0.width, height: $0.height))
                         }
@@ -458,6 +510,10 @@ import SwiftUI
                     if options.quiet { toast.show(L10n.text("累積文字已滿，請先清除累積文字。"), error: true, on: captureScreen) }
                     return
                 }
+                if let ownedImage {
+                    retainCapture(
+                        RetainedCapture(image: ownedImage, options: options, prefix: prefix, committedText: text))
+                }
                 if options.autoCopy { copyText(text) }
                 collectionSource = options.source
                 message = options.autoCopy ? L10n.text("已辨認並複製，可直接 ⌘V 貼上。") : L10n.text("辨認完成。")
@@ -474,6 +530,7 @@ import SwiftUI
                     }
                     if options.sound { NSSound(named: "Tink")?.play() }
                 }
+                if offerPrecision, let ownedImage, ownedImage.height < 100 || output.contains("://") { reread() }
             case .failure(let error):
                 failed = true
                 message = error.localizedDescription
@@ -500,6 +557,11 @@ import SwiftUI
         recognitionCancellation?.cancel()
         recognitionCancellation = nil
         closePanels()
+        review = nil
+        reviewContext = nil
+        reviewImage = nil
+        reviewVisible = false
+        hideReviewPanel()
     }
     func rememberForegroundApplication() {
         if let app = NSWorkspace.shared.frontmostApplication,
@@ -525,6 +587,8 @@ import SwiftUI
                 source: collectionSource))
     }
     func clearAdditiveBuffer() {
+        if reviewVisible { cancel(show: false) }
+        forgetRetainedCapture()
         if let options = activeOptions, options.append {
             cancel(show: false)
             if options.returnOnCancel { restoreFocus() }
@@ -567,6 +631,249 @@ import SwiftUI
             showWindow()
         }
     }
+    private func forgetRetainedCapture() {
+        retentionTask?.cancel()
+        retentionTask = nil
+        retainedCapture = nil
+        canReread = false
+    }
+    private func retainCapture(_ capture: RetainedCapture) {
+        forgetRetainedCapture()
+        retainedCapture = capture
+        canReread = true
+        retentionTask = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(120)) } catch { return }
+            self?.retainedCapture = nil
+            self?.canReread = false
+        }
+    }
+    func reread() {
+        guard let retainedCapture, !busy else { return }
+        guard retainedCapture.committedText == text else {
+            message = L10n.text("結果已編輯，請重新框選以保留你的修改。")
+            forgetRetainedCapture()
+            return
+        }
+        startReview(retainedCapture, video: false)
+    }
+    func recognizePrecisely(_ image: CGImage) {
+        beginReview(
+            image, options: options(barcode: false, quiet: false, returnOnCancel: false, singleLine: nil), video: false)
+    }
+    private func beginReview(_ image: CGImage, options: WorkflowOptions, video: Bool) {
+        guard let owned = OCRImageBuffer.copy(image) else {
+            cancel(show: false)
+            message = L10n.text("選區太大，請縮小至 1,600 萬像素以內。")
+            failed = true
+            showWindow()
+            return
+        }
+        startReview(
+            RetainedCapture(image: owned, options: options, prefix: additiveText, committedText: nil), video: video)
+    }
+    private func startReview(_ context: RetainedCapture, video: Bool) {
+        invalidateOperation()
+        forgetRetainedCapture()
+        let current = token
+        let cancellation = RecognitionCancellation()
+        recognitionCancellation = cancellation
+        activeOptions = context.options
+        reviewContext = context
+        busy = true
+        failed = false
+        reviewVisible = true
+        reviewDraft = ""
+        reviewStatus = L10n.text("正在精準重讀；剪貼簿保持原狀。")
+        let operation = precisionOperation
+        let useSecondary = secondaryEnabled && OCRModelPack.installed
+        // Hide our panels while taking the additional user-requested video samples.
+        hideWindow()
+        operationTask = Task {
+            do {
+                var frames: [CGImage] = []
+                var frameNotice: String?
+                if video {
+                    do { frames = try await videoFrames(cancellation: cancellation) } catch {
+                        try cancellation.check()
+                        try Task.checkCancellation()
+                        frameNotice = L10n.text("影片畫面或螢幕配置已改變，改用原始選區。")
+                    }
+                }
+                guard current == token, !Task.isCancelled else { return }
+                reviewImage = NSImage(
+                    cgImage: context.image, size: NSSize(width: context.image.width, height: context.image.height))
+                showReviewPanel()
+                var result = try await operation(context.image, context.options.recognition, cancellation)
+                if let original = context.committedText {
+                    // Keep the exact first output, even if Vision gives another answer on reread.
+                    let raw = textForReview(context: context, combined: original)
+                    if result.candidates.first?.text != raw {
+                        if let first = result.candidates.first {
+                            result.candidates[0] = OCRReviewCandidate(variant: .repeated, text: first.text)
+                        }
+                        result.candidates.insert(OCRReviewCandidate(variant: .original, text: raw), at: 0)
+                    }
+                }
+                if let frameNotice { result.notices.append(frameNotice) }
+                if !frames.isEmpty, let reference = OCRFrameFingerprint(context.image) {
+                    let options = context.options.recognition
+                    let original = result.original
+                    let extra = try await Task.detached(priority: .userInitiated) { () -> [String] in
+                        var choices: [String] = []
+                        for frame in frames {
+                            try cancellation.check()
+                            guard let fingerprint = OCRFrameFingerprint(frame),
+                                !fingerprint.identical(to: reference), fingerprint.stable(comparedTo: reference),
+                                fingerprint.sharpness > reference.sharpness
+                            else { continue }
+                            guard
+                                let document = try? Recognition.document(
+                                    frame, language: options.language,
+                                    words: options.words, singleLine: options.singleLine, cancellation: cancellation),
+                                OCRVideoPolicy.eligible(
+                                    original: original, proposed: document,
+                                    originalFrame: reference, proposedFrame: fingerprint)
+                            else { continue }
+                            let retry = try OCRPrecision.recognize(
+                                frame, options: options, baseline: document, cancellation: cancellation)
+                            choices += retry.candidates.map(\.text)
+                        }
+                        return choices
+                    }.value
+                    for text in extra { result.add(text, variant: .video) }
+                    result.notices.append(L10n.text("影片只比較相同文字的穩定畫面；不同字幕不會合併。"))
+                }
+                if useSecondary {
+                    do {
+                        let executable = Bundle.main.bundleURL.appendingPathComponent("Contents/MacOS/CaptureOCRWorker")
+                        let candidate = try await SecondaryOCRWorker.recognize(
+                            context.image, document: result.original,
+                            language: context.options.recognition.language, executable: executable,
+                            cancellation: cancellation)
+                        result.add(candidate, variant: .secondary)
+                    } catch {
+                        try cancellation.check()
+                        try Task.checkCancellation()
+                        result.notices.append(error.localizedDescription)
+                    }
+                }
+                guard current == token, !Task.isCancelled, !cancellation.isCancelled else { return }
+                review = result
+                reviewDraft = result.candidates.first?.text ?? ""
+                reviewStatus = L10n.text("請對照原圖，選擇或編輯後採用。沒有候選會自動覆蓋原文。")
+                busy = false
+                operationTask = nil
+                recognitionCancellation = nil
+            } catch {
+                guard current == token, !Task.isCancelled, !cancellation.isCancelled else { return }
+                busy = false
+                operationTask = nil
+                recognitionCancellation = nil
+                reviewStatus = error.localizedDescription
+                failed = true
+            }
+        }
+    }
+    private func textForReview(context: RetainedCapture, combined: String) -> String {
+        guard context.options.append, !context.prefix.isEmpty,
+            combined.hasPrefix(context.prefix + "\n")
+        else { return combined }
+        return String(combined.dropFirst(context.prefix.count + 1))
+    }
+    func addURLFormattingSuggestion() {
+        guard var result = review, let suggestion = OCRReviewFormatting.urlSuggestion(reviewDraft) else { return }
+        result.add(suggestion, variant: .urlFormatting)
+        review = result
+        reviewStatus = L10n.text("只移除空白，並非辨識修正；請檢查是否誤連了旁邊文字。")
+    }
+    func acceptReview() {
+        guard !busy, reviewVisible, review != nil, let context = reviewContext,
+            !reviewDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return }
+        if let committed = context.committedText, committed != text {
+            reviewStatus = L10n.text("結果已編輯，請重新框選以保留你的修改。")
+            return
+        }
+        do {
+            guard reviewDraft.utf8.count <= 1_000_000 else { throw CaptureOutputError.bufferFull }
+            var prefix = context.prefix
+            let combined = try CaptureOutput.combine(
+                reviewDraft, buffer: &prefix, additive: context.options.append, byteLimit: 1_000_000)
+            let options = context.options
+            // Consume the session before any observable side effect. A second click cannot append again.
+            invalidateOperation()
+            forgetRetainedCapture()
+            activeOptions = nil
+            additiveText = prefix
+            text = combined
+            tables = []
+            collectionSource = options.source
+            copyText(combined)
+            message = L10n.text("已採用並複製。")
+            if options.speech { speech.speak(text: combined, language: options.recognition.language) }
+            restoreFocus()
+        } catch { reviewStatus = error.localizedDescription }
+    }
+    func dismissReview() {
+        cancel(show: false)
+        forgetRetainedCapture()
+        message = L10n.text("已取消，剪貼簿保持原狀。")
+        restoreFocus()
+    }
+    private func videoFrames(cancellation: RecognitionCancellation) async throws -> [CGImage] {
+        guard let saved = lastSelection else { throw CancellationError() }
+        var frames: [CGImage] = []
+        for _ in 0..<2 {
+            try await Task.sleep(for: .milliseconds(180))
+            try cancellation.check()
+            let content = try await loadShareableContent()
+            guard
+                let screen = NSScreen.screens.first(where: {
+                    ($0.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
+                        == saved.display
+                }), screen.frame == saved.frame,
+                let display = content.displays.first(where: { $0.displayID == saved.display }),
+                CGSize(
+                    width: screen.frame.width * screen.backingScaleFactor,
+                    height: screen.frame.height * screen.backingScaleFactor) == saved.pixels
+            else { throw CancellationError() }
+            let excluded = content.applications.filter { $0.processID == ProcessInfo.processInfo.processIdentifier }
+            let filter = SCContentFilter(display: display, excludingApplications: excluded, exceptingWindows: [])
+            let config = SCStreamConfiguration()
+            config.width = Int(saved.pixels.width)
+            config.height = Int(saved.pixels.height)
+            config.showsCursor = false
+            let frame = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+            try cancellation.check()
+            try Task.checkCancellation()
+            guard CGSize(width: frame.width, height: frame.height) == saved.pixels,
+                let crop = frame.cropping(to: saved.crop), let owned = OCRImageBuffer.copy(crop)
+            else { throw CancellationError() }
+            frames.append(owned)
+        }
+        return frames
+    }
+    func installModels() {
+        guard !downloadingModels else { return }
+        downloadingModels = true
+        downloadTask = Task { [weak self] in
+            do {
+                try await OCRModelPack.shared.install { [weak self] message in
+                    await self?.setModelDownloadStatus(message)
+                }
+                self?.modelsInstalled = OCRModelPack.installed
+                self?.secondaryEnabled = true
+                self?.modelDownloadStatus = L10n.text("模型已安裝；只在精準重讀時載入。")
+            } catch {
+                self?.modelDownloadStatus = Task.isCancelled ? L10n.text("已取消下載。") : error.localizedDescription
+            }
+            self?.downloadingModels = false
+            self?.downloadTask = nil
+        }
+    }
+    private func setModelDownloadStatus(_ message: String) { modelDownloadStatus = message }
+    func cancelModelDownload() { downloadTask?.cancel() }
+
     func speak() {
         speech.toggle(text: text, language: language)
     }
