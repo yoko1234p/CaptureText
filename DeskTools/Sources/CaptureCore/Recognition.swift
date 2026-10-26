@@ -97,11 +97,15 @@ public enum OCRLanguage: String, CaseIterable, Identifiable, Sendable {
 
 public enum SelectionGeometry {
     /// Input is local AppKit points (bottom-left); CGImage crop uses top-left pixels.
-    public static func pixelRect(selection: CGRect, bounds: CGRect, imageWidth: Int, imageHeight: Int) -> CGRect? {
-        let rect = selection.standardized.intersection(bounds)
-        guard !rect.isNull, rect.width >= 3, rect.height >= 3, bounds.width > 0, bounds.height > 0,
+    public static func pixelRect(
+        selection: CGRect, bounds: CGRect, imageWidth: Int, imageHeight: Int, paddingPoints: CGFloat = 0
+    ) -> CGRect? {
+        let selected = selection.standardized.intersection(bounds)
+        guard !selected.isNull, selected.width >= 3, selected.height >= 3, bounds.width > 0, bounds.height > 0,
             imageWidth > 0, imageHeight > 0
         else { return nil }
+        let padding = paddingPoints.isFinite ? min(8, max(0, paddingPoints)) : 0
+        let rect = selected.insetBy(dx: -padding, dy: -padding).intersection(bounds)
         let sx = CGFloat(imageWidth) / bounds.width
         let sy = CGFloat(imageHeight) / bounds.height
         return CGRect(
@@ -183,7 +187,12 @@ public enum Recognition {
         }
         let lines = observations.compactMap { $0.topCandidates(1).first?.string }
         guard !lines.isEmpty else { throw RecognitionTextError.noText }
-        return lines.joined(separator: singleLine ? " " : "\n")
+        let firstLine = observations[0].boundingBox
+        let oneVisualLine = observations.allSatisfy { observation in
+            let overlap = firstLine.intersection(observation.boundingBox)
+            return !overlap.isNull && overlap.height >= min(firstLine.height, observation.boundingBox.height) * 0.5
+        }
+        return RecognizedTextLayout.join(lines, singleLine: singleLine, oneVisualLine: oneVisualLine)
     }
 
     private static func covers(_ existing: CGRect, _ candidate: CGRect) -> Bool {
@@ -224,6 +233,38 @@ public enum Recognition {
         let values = (request.results ?? []).compactMap(\.payloadStringValue)
         guard !values.isEmpty else { throw DeskError.invalid(L10n.text("沒有辨認到 QR／條碼。")) }
         return Array(NSOrderedSet(array: values)).compactMap { $0 as? String }.joined(separator: "\n")
+    }
+}
+
+enum RecognizedTextLayout {
+    static func join(_ lines: [String], singleLine: Bool, oneVisualLine: Bool) -> String {
+        if oneVisualLine, let url = isolatedURL(lines) { return url }
+        return lines.joined(separator: singleLine ? " " : "\n")
+    }
+
+    private static func isolatedURL(_ lines: [String]) -> String? {
+        guard !lines.isEmpty, lines.count <= 16 else { return nil }
+        let compact = lines.joined().filter { !$0.isWhitespace }
+        guard compact.count <= 8_192,
+            compact.unicodeScalars.allSatisfy({ $0.isASCII && !CharacterSet.controlCharacters.contains($0) })
+        else { return nil }
+        let url: String
+        if compact.hasPrefix("https://") || compact.hasPrefix("http://") {
+            url = compact
+        } else if compact.hasPrefix("https//") || compact.hasPrefix("http//") {
+            url = compact.replacingOccurrences(of: "//", with: "://", range: compact.range(of: "//"))
+        } else if compact.hasPrefix("https:/") || compact.hasPrefix("http:/") {
+            url = compact.replacingOccurrences(of: ":/", with: "://", range: compact.range(of: ":/"))
+        } else {
+            url = compact
+        }
+        guard url.hasPrefix("https://") || url.hasPrefix("http://"),
+            let components = URLComponents(string: url), let host = components.host,
+            host.contains("."), components.user == nil, components.password == nil,
+            components.query != nil,
+            !url.dropFirst(8).contains("http://"), !url.dropFirst(8).contains("https://")
+        else { return nil }
+        return url
     }
 }
 

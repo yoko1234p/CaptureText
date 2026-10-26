@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 source = Path(sys.argv[1])
-versions = {"CaptureText": ("0.9.0", "15"), "DevWorkbench": ("0.6.0", "10"), "EdgeNotes": ("0.8.0", "21")}
+versions = {"CaptureText": ("0.9.1", "16"), "DevWorkbench": ("0.6.0", "10"), "EdgeNotes": ("0.8.0", "21")}
 available = [('CaptureText', 'capturetext', True)]
 requested = sys.argv[3:] or [name for name, _, _ in available]
 if any(name not in {item[0] for item in available} for name in requested):

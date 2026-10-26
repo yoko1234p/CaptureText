@@ -1,5 +1,5 @@
 import AppKit
-import CaptureCore
+@testable import CaptureCore
 import CoreImage
 import Darwin
 import DeskCore
@@ -36,9 +36,43 @@ final class GeometryTests: XCTestCase {
                     imageHeight: 200))
         }
     }
+
+    func testCropPaddingIncludesNearbyPunctuationAndStaysOnScreen() {
+        XCTAssertEqual(
+            SelectionGeometry.pixelRect(
+                selection: CGRect(x: 20, y: 10, width: 50, height: 10),
+                bounds: CGRect(x: 0, y: 0, width: 100, height: 40),
+                imageWidth: 200, imageHeight: 80, paddingPoints: 4),
+            CGRect(x: 32, y: 32, width: 116, height: 36))
+        XCTAssertEqual(
+            SelectionGeometry.pixelRect(
+                selection: CGRect(x: 0, y: 0, width: 20, height: 10),
+                bounds: CGRect(x: 0, y: 0, width: 100, height: 40),
+                imageWidth: 200, imageHeight: 80, paddingPoints: 4),
+            CGRect(x: 0, y: 52, width: 48, height: 28))
+    }
 }
 
 final class RecognitionTests: XCTestCase {
+    func testStandaloneURLFragmentsDoNotGainOCRSpaces() {
+        let fragments = ["https://example.com/explore/123?xsec_token=A B", "u_12&xsec_source=pc_user"]
+        XCTAssertEqual(
+            RecognizedTextLayout.join(fragments, singleLine: false, oneVisualLine: true),
+            "https://example.com/explore/123?xsec_token=ABu_12&xsec_source=pc_user")
+        XCTAssertEqual(
+            RecognizedTextLayout.join(["https//example.com/a?b=1 2"], singleLine: false, oneVisualLine: true),
+            "https://example.com/a?b=12")
+    }
+
+    func testURLCleanupLeavesOtherTextAndSeparateLinesAlone() {
+        let prose = ["https://example.com/path click here"]
+        XCTAssertEqual(RecognizedTextLayout.join(prose, singleLine: false, oneVisualLine: true), prose[0])
+        let separateLines = ["https://example.com/a?b=1", "Read more"]
+        XCTAssertEqual(
+            RecognizedTextLayout.join(separateLines, singleLine: false, oneVisualLine: false),
+            separateLines.joined(separator: "\n"))
+    }
+
     func testEnglishJapaneseAndTraditionalChineseOCR() async throws {
         for (language, expected) in [
             (OCRLanguage.english, "Hello OCR. Invoice 12345."),

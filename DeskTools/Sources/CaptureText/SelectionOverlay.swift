@@ -126,7 +126,8 @@ import DeskCore
         guard let selection,
             let rect = SelectionGeometry.pixelRect(
                 selection: selection, bounds: bounds,
-                imageWidth: image.width, imageHeight: image.height), let crop = image.cropping(to: rect)
+                imageWidth: image.width, imageHeight: image.height, paddingPoints: 4),
+            let crop = image.cropping(to: rect)
         else {
             origin = nil
             end = nil
