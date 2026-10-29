@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreML
 import DeskCore
 import Foundation
 import ImageIO
@@ -166,9 +167,11 @@ public enum Recognition {
         if language == .automatic {
             let detector = VNDetectTextRectanglesRequest()
             try cancellation?.begin(detector)
-            do { try VNImageRequestHandler(cgImage: image, orientation: .up).perform([detector]) } catch {
+            // Supplemental detection must never discard the already recognised text.
+            do { try VNImageRequestHandler(cgImage: image, orientation: .up).perform([detector]) }
+            catch {
                 cancellation?.finish()
-                throw error
+                try cancellation?.check()
             }
             cancellation?.finish()
             try cancellation?.check()
@@ -224,24 +227,50 @@ public enum Recognition {
 
     static func textObservations(
         _ image: CGImage, language: OCRLanguage, words: [String], region: CGRect? = nil, correction: Bool = true,
-        cancellation: RecognitionCancellation?
+        cancellation: RecognitionCancellation?,
+        perform: ((VNRecognizeTextRequest) throws -> Void)? = nil
     ) throws -> [VNRecognizedTextObservation] {
-        let request = VNRecognizeTextRequest()
-        try cancellation?.begin(request)
-        defer { cancellation?.finish() }
-        request.recognitionLevel = .accurate
-        let supported = try request.supportedRecognitionLanguages()
+        let probe = VNRecognizeTextRequest()
+        probe.recognitionLevel = .accurate
+        let supported = try probe.supportedRecognitionLanguages()
         guard language.isSupported(by: supported) else { throw DeskError.invalid(L10n.text("系統不支援選擇的 OCR 語言。")) }
-        request.recognitionLanguages = language.recognitionCodes(supported: supported)
-        guard !request.recognitionLanguages.isEmpty else { throw DeskError.invalid(L10n.text("系統不支援選擇的 OCR 語言。")) }
-        request.automaticallyDetectsLanguage = language == .automatic
-        request.usesLanguageCorrection = correction
-        request.customWords = Array(words.prefix(500))
-        if let region { request.regionOfInterest = region }
-        try cancellation?.check()
-        try VNImageRequestHandler(cgImage: image, orientation: .up).perform([request])
-        try cancellation?.check()
-        return request.results ?? []
+        let codes = language.recognitionCodes(supported: supported)
+        guard !codes.isEmpty else { throw DeskError.invalid(L10n.text("系統不支援選擇的 OCR 語言。")) }
+        func attempt(cpuOnly: Bool) throws -> [VNRecognizedTextObservation] {
+            let request = VNRecognizeTextRequest()
+            request.recognitionLevel = .accurate
+            request.recognitionLanguages = codes
+            request.automaticallyDetectsLanguage = language == .automatic
+            request.usesLanguageCorrection = correction
+            request.customWords = Array(words.prefix(500))
+            if let region { request.regionOfInterest = region }
+            if cpuOnly {
+                let stages = try request.supportedComputeStageDevices
+                guard !stages.isEmpty else { throw DeskError.invalid(L10n.text("OCR CPU 重試不可用。")) }
+                for (stage, devices) in stages {
+                    guard let cpu = devices.first(where: { if case .cpu = $0 { return true }; return false }) else {
+                        throw DeskError.invalid(L10n.text("OCR CPU 重試不可用。"))
+                    }
+                    request.setComputeDevice(cpu, for: stage)
+                }
+            }
+            try cancellation?.begin(request)
+            defer { cancellation?.finish() }
+            try cancellation?.check()
+            if let perform { try perform(request) }
+            else { try VNImageRequestHandler(cgImage: image, orientation: .up).perform([request]) }
+            try cancellation?.check()
+            return request.results ?? []
+        }
+        do { return try attempt(cpuOnly: false) }
+        catch {
+            try cancellation?.check()
+            // A fresh Vision request with a CPU-only device can recover from
+            // an accelerator failure. Preserve the original error if it cannot.
+            let original = error
+            do { return try attempt(cpuOnly: true) }
+            catch { try cancellation?.check(); throw original }
+        }
     }
 
     public static func barcodes(_ image: CGImage, cancellation: RecognitionCancellation? = nil) throws -> String {

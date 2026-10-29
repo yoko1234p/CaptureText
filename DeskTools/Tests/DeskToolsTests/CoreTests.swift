@@ -55,6 +55,58 @@ final class GeometryTests: XCTestCase {
 }
 
 final class RecognitionTests: XCTestCase {
+    func testRecognitionRetriesOnCPUAfterVisionFailure() async throws {
+        let image = try await MainActor.run { () throws -> CGImage in
+            let bitmap = try XCTUnwrap(NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: 900, pixelsHigh: 160, bitsPerSample: 8,
+                samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0))
+            let context = try XCTUnwrap(NSGraphicsContext(bitmapImageRep: bitmap))
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = context
+            NSColor.white.setFill()
+            NSRect(x: 0, y: 0, width: 900, height: 160).fill()
+            ("Hello OCR 123" as NSString).draw(
+                at: NSPoint(x: 30, y: 55),
+                withAttributes: [.font: NSFont.systemFont(ofSize: 52), .foregroundColor: NSColor.black])
+            NSGraphicsContext.restoreGraphicsState()
+            return try XCTUnwrap(bitmap.cgImage)
+        }
+        var attempts = 0
+        let result = try Recognition.textObservations(
+            image, language: .english, words: [], cancellation: RecognitionCancellation()) { request in
+                attempts += 1
+                if attempts == 1 { throw NSError(domain: "fixture.vision", code: 13) }
+                let stages = try request.supportedComputeStageDevices
+                XCTAssertFalse(stages.isEmpty)
+                for stage in stages.keys {
+                    guard let selected = request.computeDevice(for: stage), case .cpu = selected else {
+                        XCTFail("Retry must use an advertised CPU device for every stage")
+                        return
+                    }
+                }
+                try VNImageRequestHandler(cgImage: image).perform([request])
+            }
+        XCTAssertEqual(attempts, 2)
+        XCTAssertTrue(result.compactMap { $0.topCandidates(1).first?.string }.joined().contains("Hello OCR"))
+    }
+
+    func testCancellationAfterVisionFailurePreventsRetry() throws {
+        let context = try XCTUnwrap(CGContext(
+            data: nil, width: 40, height: 40, bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        let image = try XCTUnwrap(context.makeImage())
+        let cancellation = RecognitionCancellation()
+        var attempts = 0
+        XCTAssertThrowsError(try Recognition.textObservations(
+            image, language: .english, words: [], cancellation: cancellation) { _ in
+                attempts += 1
+                cancellation.cancel()
+                throw NSError(domain: "fixture.vision", code: 13)
+            }) { XCTAssertTrue($0 is CancellationError) }
+        XCTAssertEqual(attempts, 1)
+    }
+
     func testRawURLFragmentsPreserveSpacesAndMissingPunctuation() {
         let fragments = ["https://example.com/explore/123?xsec_token=A B", "u_12&xsec_source=pc_user"]
         XCTAssertEqual(

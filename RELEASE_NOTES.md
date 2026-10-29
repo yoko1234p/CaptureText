@@ -1,3 +1,9 @@
+# CaptureText 0.10.1 — source update (not yet a downloadable release)
+
+- **English:** Retry a failed Vision text request on CPU when supported, and preserve recognised text if supplemental region detection fails. See [validation](DeskTools/docs/capture-ocr-recovery-0.10.1.md).
+- **繁體中文：** 系統文字辨識請求失敗時，若支援則以 CPU 重試；補充偵測失敗時保留已辨識文字。
+- **简体中文：** 系统文字识别请求失败时，如支持则以 CPU 重试；补充检测失败时保留已识别文字。
+
 # CaptureText v0.10.0-preview.1
 
 ## English
